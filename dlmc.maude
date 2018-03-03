@@ -1,0 +1,276 @@
+fmod WORLD is
+	sort World .
+endfm 
+
+fmod TRANSITION is
+	sort Transition .
+endfm 
+
+view World from TRIV to WORLD is  
+    sort Elt to World .  
+endv 
+
+view Transition from TRIV to TRANSITION is  
+    sort Elt to Transition .  
+endv 
+
+fmod TSET is
+	pr SET{Transition} .
+endfm 
+
+fmod WSET is
+	pr SET{World} .
+endfm 
+
+
+mod DL-MODULE is
+
+	inc NAT . 
+	inc TSET .
+	inc WSET .
+
+	sorts Action Actions DLFormula Label Predicate .
+	
+	subsort Action < Actions .
+	subsort Action < Label . 
+	subsort Predicate < DLFormula .
+
+	op p_ : Nat -> Predicate . 
+	
+	op <_>_ : Actions DLFormula -> DLFormula . 
+
+	op ~_ : DLFormula -> DLFormula . 
+	
+	op _\/_ : DLFormula DLFormula -> DLFormula .
+
+	op w_ : Nat -> World . 
+
+	op a_ : Nat -> Action . 
+
+	op epsilon : -> Action . 
+
+	op noW : -> World .
+	op noF : -> DLFormula . 
+ 
+	op worlds : -> Set{World} .
+	
+	op transitions : -> Set{Transition} .
+
+	op transition : World Label -> Transition [ctor] .
+	
+	op _;_ : Actions Actions -> Actions [assoc ] .
+	op _* : Actions -> Actions [prec 30 ] .
+	op _U_ : Actions Actions -> Actions [assoc comm prec 31] .
+	
+	vars AC1 AC2 : Actions . var DLF : DLFormula .
+	
+	rl [;] : < (AC1 ; AC2) > DLF => < AC1 > < AC2 > DLF . 
+	rl [*] : < AC1 * > DLF => DLF .
+	rl [*] : < AC1 * > DLF => < AC1 ; AC1 * > DLF .
+	rl [U] : < AC1 U AC2 > DLF => < AC1 > DLF . 
+	
+	op relation : World Action -> [Transition] . 
+
+
+endm
+
+
+
+load model-checker
+
+
+
+mod DL-MODEL-CHECKER is
+
+	inc DL-MODULE .
+
+	inc META-LEVEL .
+
+	inc NAT .
+
+
+	sort LabelList .
+
+	subsort Label < LabelList . 
+
+	op none : -> LabelList . 
+
+	op _>_ : LabelList LabelList -> LabelList [assoc id: none] . 	
+
+	
+
+	sort DLModel .
+
+	op dlModel : Bool LabelList -> DLModel .
+
+	op not_ : DLModel -> DLModel .
+
+	op isTrue? : DLModel -> Bool .
+
+	
+
+	---op findExec : Worlds DLFormula Nat LabelList -> DLModel .
+
+
+
+	op oneExec : Transition -> World . 
+	
+	op getLabel : Transition -> Label .
+
+			
+
+	op modelCheck : World DLFormula Nat LabelList -> DLModel .
+
+	op notModel : DLModel -> DLModel . 
+
+
+
+	op formulaerror : -> [DLFormula] . 
+	
+
+
+	op valuation : Predicate -> Set{World} .
+
+	op trSearch : World Action Nat -> [Transition] .
+
+	op dl-extension-module : -> Qid .
+
+	op error : -> [World] .
+	
+	op wError : -> [Set{World}] . 
+
+	op tError : -> [Transition] .
+	
+	
+
+	op dlFormula : World [DLFormula] Nat LabelList Nat -> DLModel .
+
+	op dlFormula-aux : World [DLFormula] [DLFormula] Nat LabelList Nat -> DLModel .
+
+	op holdsIn : Predicate World -> Bool .
+	
+	op findOneStep : Set{Transition} World DLFormula Nat LabelList -> DLModel . 
+	
+	op <_>_ : Actions DLFormula -> DLFormula . 	
+
+	vars ACTS ACTS1 ACTS2 : Actions . vars F F1 : DLFormula . var ACT : Action . 
+
+	vars BOUND SOL N : Nat .
+
+	vars DLF DPLF1 DPLF2 : DLFormula . vars A : DLFormula . var Q : Qid . 
+
+	var B : Bool . var PPDLM : DLModel .
+
+	var M : World . var BPL : LabelList . 
+	
+	var TRANS : Set{Transition} . var T : Transition . var L : Label . var PR : Predicate . 
+
+		  		
+	
+	--- DLModel operations
+
+	eq not dlModel(B, BPL) = dlModel(not B, BPL) .
+
+	eq isTrue?(dlModel(B, BPL)) = B .	
+
+
+
+	--- DL model checking
+
+	eq modelCheck( M, F, 0 , BPL) = dlModel(false , BPL) .
+
+	eq modelCheck( M, PR, N , BPL) = dlModel(holdsIn(PR,M), BPL) .
+
+	eq modelCheck( M , ~ F, N, BPL) = not modelCheck(M , F, N, BPL) .
+
+	eq modelCheck( M , F \/ F1, N, BPL) = if isTrue?(modelCheck( M , F, N, BPL)) 
+		then modelCheck( M , F, N, BPL) else modelCheck( M , F1, N, BPL) fi .
+		
+	eq modelCheck( M , (< ACT > F), N, BPL) = if isTrue?(findOneStep(trSearch(M, ACT, 0), M, F, N, BPL))
+		then findOneStep(trSearch(M, ACT, 0), M, F, N, BPL ) else dlModel(false, BPL) fi .
+
+	eq modelCheck( M, < ACTS > F, N , BPL) = dlFormula( M, < ACTS > F , N, BPL , 0) .
+	
+	
+
+	
+	eq oneExec( transition(M , L) ) = M . 
+	
+	eq getLabel( transition(M, L)) = L .
+	
+	
+	
+
+	eq findOneStep( empty, M , F , N , BPL) = dlModel(false , BPL) .
+	eq findOneStep( (TRANS, T), M , F , N , BPL ) = if isTrue?( modelCheck( oneExec( T ) , F , sd(N , 1) , BPL > getLabel(T) ) ) then modelCheck( oneExec( T ) , F , sd(N , 1) , BPL > getLabel(T) ) else findOneStep(TRANS , M , F , N , BPL ) fi .
+	
+	---reflexao
+	
+   	eq holdsIn(PR, M) = M in downTerm(getTerm(metaReduce(upModule('VALUATION, false), 'valuation[upTerm(PR)])), wError) .
+
+	eq trSearch(M, ACT, N) = if downTerm(getTerm(metaSearch(upModule('VALUATION, false), 'relation[upTerm(M) , upTerm(ACT)], 'T:Transition, nil, '! , 2, N)), tError) == tError 
+		then empty else union( downTerm(getTerm(metaSearch(upModule('VALUATION, false), 'relation[upTerm(M) , upTerm(ACT)], 'T:Transition, nil, '! , 2, N)), tError) , trSearch(M, ACT, N + 1)) fi .
+	
+
+	eq dlFormula(M, F, 0, BPL, SOL) = dlModel(false, BPL) .
+
+	eq dlFormula(M, F, N, BPL, SOL) = dlFormula-aux(M, downTerm(getTerm(metaSearch(upModule('DL-MODULE, false), upTerm(F), 'F:DLFormula, nil, '+, 1, SOL)), formulaerror), F, N, BPL, SOL) .
+	eq dlFormula-aux(M, formulaerror, F1, N, BPL, SOL) = dlModel(false, BPL) .
+	eq dlFormula-aux(M, F, F1, N, BPL, SOL) = if isTrue?(modelCheck(M, F, N, BPL)) then modelCheck(M, F, N, BPL) else
+		dlFormula(M, F1, sd(N, 1), BPL, SOL + 1) fi .
+	
+
+	
+
+endm
+
+
+
+mod DL-MODEL-CHECKER-aux is
+
+	ex DL-MODEL-CHECKER .
+
+	
+
+	eq dl-extension-module = 'DL-MODULE .
+
+endm
+
+
+
+mod VALUATION is inc DL-MODEL-CHECKER-aux . 
+
+
+	eq valuation(p 1) = w 2, w 4, w 5, w 6 . 
+	eq valuation(p 2) = w 5 .
+	eq valuation(p 3) = w 3, w 4, w 5 .
+	eq valuation(p 4) = w 6 .
+
+
+	---a 2d = p1; heat = p2;time set = p3; done = p4
+
+	---a 1 oven = pi1; a 2 door = pi2 ; a 3 door = pi3
+	---set time = pi4; a 5 = pi5; a 6 = pi6;
+	
+
+	eq relation(w 1 , a 6) = transition(w 1, a 6)  .
+	eq relation(w 1 , a 2) = transition(w 2, a 2) . 
+	eq relation(w 1 , a 4) = transition(w 3, a 4) .
+	eq relation(w 2 , a 3) = transition(w 1, a 3) .
+	eq relation(w 2 , a 4) = transition(w 4, a 4) .
+	eq relation(w 3 , a 5) = transition(w 1, a 5) .
+	eq relation(w 3 , a 2) = transition(w 4, a 2) . 
+	eq relation(w 4 , a 2) = transition(w 2, a 2) . 
+	eq relation(w 4 , a 3) = transition(w 3, a 3) .
+	eq relation(w 4 , a 1) = transition(w 5, a 1) .
+	eq relation(w 5 , a 3) = transition(w 3, a 3) .
+	eq relation(w 5 , a 5) = transition(w 4, a 5) .
+	eq relation(w 5 , a 6) = transition(w 6, a 6) . 
+	eq relation(w 6 , a 3) = transition(w 1, a 3) .
+	eq relation(w 6 , a 4) = transition(w 4, a 4) . 
+ 
+
+endm
+
+---Nao existe alguma sequencia de acoes que leve ao estado de pronto
+red modelCheck(w 1, ~ ( < (a 4 U a 2 U a 1 U a 6 U a 3 U a 5) * > ( p 4 ) ), 20, none).
