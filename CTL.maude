@@ -1,0 +1,222 @@
+fmod WORLD is
+	sort World .
+endfm 
+
+fmod TRANSITION is
+	sort Transition .
+endfm 
+
+view World from TRIV to WORLD is  
+    sort Elt to World .  
+endv 
+
+view Transition from TRIV to TRANSITION is  
+    sort Elt to Transition .  
+endv 
+
+fmod TSET is
+	pr SET{Transition} .
+endfm 
+
+fmod WSET is
+	pr SET{World} .
+endfm 
+
+load model-checker
+
+mod DL-MODEL-CHECKER is
+
+	inc NAT . 
+	inc TSET .
+	inc WSET .
+	inc META-LEVEL .
+
+	sorts CTLFormula Proposition TList .
+
+	subsort Proposition < CTLFormula .
+	subsort Transition < TList .
+
+	op p_ : Nat -> Proposition . 
+	
+	op AX : CTLFormula -> CTLFormula . 
+	
+	op A(_U_) :  CTLFormula CTLFormula -> CTLFormula .
+	
+	op AG :  CTLFormula -> CTLFormula .
+
+	op ~_ : CTLFormula -> CTLFormula . 
+	
+	op _/\_ : CTLFormula CTLFormula -> CTLFormula .
+	
+	op _\/_ : CTLFormula CTLFormula -> CTLFormula .
+
+	op true : -> CTLFormula . 
+
+	op w_ : Nat -> World . 
+
+	op none : -> TList .
+
+	op noW : -> World .
+	op noF : -> CTLFormula . 
+ 
+	op worlds : -> Set{World} .
+	
+	op transitions : -> Set{Transition} .
+	
+	op transition : World World -> Transition . 
+
+	op _>_ : TList TList -> TList [assoc id: none] .
+	
+	op arcs : World -> Set{Transition} .
+	
+	
+	
+
+	sort CTLModel .
+
+	op ctlModel : Bool TList -> CTLModel .
+
+	op not_ : CTLModel -> CTLModel .
+
+	op isTrue? : CTLModel -> Bool .
+	
+	op getPath : CTLModel -> TList .
+
+	op oneExec : Transition -> World .
+		
+
+	op modelCheck : World CTLFormula Nat TList -> CTLModel .
+
+	op notModel : CTLModel -> CTLModel . 
+
+	op formulaerror : -> [CTLFormula] . 
+	
+
+
+	op valuation : Proposition -> Set{World} .
+
+	op trSearch : World -> [Transition] .
+
+	op dl-extension-module : -> Qid .
+
+	op error : -> [World] .
+	
+	op wError : -> [Set{World}] . 
+
+	op tError : -> [Set{Transition}] .
+	
+	op tsError : -> [Set{Transition}] . 
+	
+
+	op holdsIn : Proposition World -> Bool .
+	
+	op holdsInSet : Set{Transition} CTLFormula Nat TList -> CTLModel .
+
+	op findOneStep : Set{Transition} World CTLFormula Nat TList -> CTLModel . 
+
+	op neigh : World -> Set{Transition} .
+
+	op curr : Transition -> World .
+
+	vars F F1 : CTLFormula . 
+
+	vars BOUND SOL N : Nat .
+
+	vars DLF DPLF1 DPLF2 : CTLFormula . var Q : Qid . 
+
+	var B : Bool . var PPDLM : CTLModel .
+
+	vars M M2 : World . var TS : TList . 
+	
+	var TRANS : Set{Transition} . var T : Transition . var PR : Proposition . 
+
+		  		
+	
+	--- CTLModel operations
+
+	eq not ctlModel(B, TS) = ctlModel(not B, TS) .
+
+	eq isTrue?(ctlModel(B, TS)) = B .	
+	
+	eq getPath(ctlModel(B, TS)) = TS . 
+
+
+
+	--- DL model checking
+
+	eq modelCheck( M, true, N , TS) = ctlModel(true , TS) .
+
+	eq modelCheck( M, F, 0 , TS) = ctlModel(true , TS) .
+
+	eq modelCheck( M, PR, N , TS) = ctlModel(holdsIn(PR,M), TS) .
+
+	eq modelCheck( M , ~ F, N, TS) = not modelCheck(M , F, N, TS) .
+
+	eq modelCheck( M , F /\ F1, N, TS) = if isTrue?(modelCheck( M , F, N, TS)) 
+		then modelCheck( M , F1, N, TS) else modelCheck( M , F, N, TS) fi .
+		
+	eq modelCheck( M , (AX(F)), N, TS) = holdsInSet(neigh(M), F, sd(N, 1), TS) .
+	
+	eq modelCheck( M , (AG(F)), N, TS) = if isTrue?(modelCheck(M, F, N, TS)) then holdsInSet(neigh(M), AG(F), sd(N, 1), TS) else modelCheck(M, F, N, TS) fi .
+		
+	eq modelCheck( M , (A(F U F1)), N, TS) = if isTrue?(modelCheck(M, F1, N, TS)) then ctlModel(true, TS) 
+		else if isTrue?(modelCheck(M, F, N, TS)) then holdsInSet(neigh(M), A(F U F1), sd(N, 1), TS) else modelCheck(M, F, N, TS) fi fi .
+	
+	
+	eq oneExec( transition(M , M2) ) = M2 . 
+	eq curr(transition(M , M2)) = M . 
+
+	---eq findOneStep( empty, M , F , N , TS) = ctlModel(true , TS) .
+	---eq findOneStep( (TRANS, T), M , F , N , TS ) = if isTrue?( modelCheck( oneExec( T ) , F , sd(N , 1) , TS > getLabel(T) ) ) 
+	---	then findOneStep(TRANS , M , F , N , TS ) else ctlModel(false, getLabel(modelCheck( oneExec( T ) , F , sd(N , 1) , TS > ---getLabel(T) ))) fi .
+	
+	---reflexao
+	
+   	eq holdsIn(PR, M) = M in downTerm(getTerm(metaReduce(upModule('VALUATION, false), 'valuation[upTerm(PR)])), wError) .
+	
+	eq holdsInSet(empty, F, N, TS) = ctlModel(true, none) . 
+	eq holdsInSet((TRANS, T), F, N, TS) = if isTrue?(modelCheck(oneExec(T), F, N, TS > T)) then holdsInSet(TRANS, F, N, TS) 
+		else modelCheck(oneExec(T), F, N, TS > T) fi .
+	
+	eq neigh(M) = if  downTerm(getTerm(metaReduce(upModule('VALUATION, false), 'arcs[upTerm(M)])), tError) == tError then empty 
+		else downTerm(getTerm(metaReduce(upModule('VALUATION, false), 'arcs[upTerm(M)])), tError) fi .
+
+	---eq trSearch(M, N) = trSearch-aux(M, N, downTerm(getTerm(metaReduce(upModule('VALUATION, false), 'labels)), tsError)) .
+	---eq trSearch(M, N, (TRANS, T)) = if downTerm(getTerm(metaSearch(upModule('VALUATION, false), 'relation[upTerm(M) , upTerm(ACT)], 'T:Transition, nil, '! , 2, N)), tError) == tError 
+		---then empty else union( downTerm(getTerm(metaSearch(upModule('VALUATION, false), 'relation[upTerm(M) , upTerm(ACT)], ---'T:Transition, nil, '! , 2, N)), tError) , trSearch(M, ACT, N + 1)) fi .
+	
+
+	
+
+endm
+
+
+
+
+
+mod VALUATION is inc DL-MODEL-CHECKER . 
+
+	eq valuation(p 1) = w 1, w 2, w 4, w 3 . 
+	eq valuation(p 2) = w 5 .
+	eq valuation(p 3) = w 3, w 4, w 5 .
+	eq valuation(p 4) = w 6 .
+
+
+	---a 2d = p1; heat = p2;time set = p3; done = p4
+
+	---a 1 oven = pi1; a 2 door = pi2 ; a 3 door = pi3
+	---set time = pi4; a 5 = pi5; a 6 = pi6;
+
+	eq arcs(w 1) = transition(w 1, w 2), transition(w 1, w 3), transition(w 1, w 1).
+	eq arcs(w 2) = transition(w 2, w 4), transition(w 2, w 1).
+	eq arcs(w 3) = transition(w 3, w 4), transition(w 3, w 1) . 
+	eq arcs(w 4) = transition(w 4, w 5), transition(w 4, w 3), transition(w 4, w 2) .
+	eq arcs(w 5) = transition(w 5, w 6), transition(w 5, w 4), transition(w 5, w 3) . 
+	eq arcs(w 6) = transition(w 6, w 1), transition(w 6, w 4) . 
+
+ 
+
+endm
+
+---Nao existe alguma sequencia de acoes que leve ao estado de pronto
+red modelCheck(w 1,  ( A( p 1 U p 4 ) ), 10, none).
