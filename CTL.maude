@@ -166,9 +166,6 @@ mod DL-MODEL-CHECKER is
 	eq oneExec( transition(M , M2) ) = M2 . 
 	eq curr(transition(M , M2)) = M . 
 
-	---eq findOneStep( empty, M , F , N , TS) = ctlModel(true , TS) .
-	---eq findOneStep( (TRANS, T), M , F , N , TS ) = if isTrue?( modelCheck( oneExec( T ) , F , sd(N , 1) , TS > getLabel(T) ) ) 
-	---	then findOneStep(TRANS , M , F , N , TS ) else ctlModel(false, getLabel(modelCheck( oneExec( T ) , F , sd(N , 1) , TS > ---getLabel(T) ))) fi .
 	
 	---reflexao
 	
@@ -181,9 +178,6 @@ mod DL-MODEL-CHECKER is
 	eq neigh(M) = if  downTerm(getTerm(metaReduce(upModule('VALUATION, false), 'arcs[upTerm(M)])), tError) == tError then empty 
 		else downTerm(getTerm(metaReduce(upModule('VALUATION, false), 'arcs[upTerm(M)])), tError) fi .
 
-	---eq trSearch(M, N) = trSearch-aux(M, N, downTerm(getTerm(metaReduce(upModule('VALUATION, false), 'labels)), tsError)) .
-	---eq trSearch(M, N, (TRANS, T)) = if downTerm(getTerm(metaSearch(upModule('VALUATION, false), 'relation[upTerm(M) , upTerm(ACT)], 'T:Transition, nil, '! , 2, N)), tError) == tError 
-		---then empty else union( downTerm(getTerm(metaSearch(upModule('VALUATION, false), 'relation[upTerm(M) , upTerm(ACT)], ---'T:Transition, nil, '! , 2, N)), tError) , trSearch(M, ACT, N + 1)) fi .
 	
 
 	
@@ -218,5 +212,5 @@ mod VALUATION is inc DL-MODEL-CHECKER .
 
 endm
 
----Nao existe alguma sequencia de acoes que leve ao estado de pronto
+
 red modelCheck(w 1,  ( A( p 1 U p 4 ) ), 10, none).
