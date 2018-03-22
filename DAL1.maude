@@ -1,0 +1,369 @@
+fmod EVENT is
+	sort Event .
+endfm 
+
+fmod WORLD is
+	sort World .
+endfm 
+
+fmod TRANSITION is
+	sort Transition .
+endfm 
+
+view World from TRIV to WORLD is  
+    sort Elt to World .  
+endv 
+
+view Transition from TRIV to TRANSITION is  
+    sort Elt to Transition .  
+endv 
+
+view Event from TRIV to EVENT is  
+    sort Elt to Event .  
+endv
+
+fmod TSET is
+	pr SET{Transition} .
+endfm 
+
+fmod WSET is
+	pr SET{World} .
+endfm 
+
+fmod ESET is
+	pr SET{Event} .
+endfm 
+
+load model-checker
+
+mod DL-MODEL-CHECKER is
+
+	inc NAT . 
+	inc TSET .
+	inc WSET .
+	inc ESET . 
+	inc META-LEVEL .
+
+	sorts DALFormula Proposition Path Action .
+
+	subsort Proposition < DALFormula .
+	subsort Transition < Path .
+
+	op a_ : Nat -> Action . 
+	
+	op p_ : Nat -> Proposition . 
+	
+	op e_ : Nat -> Event .
+	
+	op w_ : Nat -> World . 
+	
+	op AN : DALFormula -> DALFormula . 
+	
+	op A(_U_) :  DALFormula DALFormula -> DALFormula .
+	
+	op A(_U2_) :  DALFormula DALFormula -> DALFormula .
+	
+	op AG :  DALFormula -> DALFormula .
+	
+	op AG2 :  DALFormula -> DALFormula .
+
+	op ~_ : DALFormula -> DALFormula . 
+	
+	op _/\_ : DALFormula DALFormula -> DALFormula .
+	
+	op _\/_ : DALFormula DALFormula -> DALFormula .
+	
+	op [_]_ : Action DALFormula -> DALFormula .
+
+	op true : -> DALFormula . 
+
+	op _n_ : Action Action -> Action . 
+
+	op _u_ : Action Action -> Action . 
+
+	op ~_ : Action -> Action . 
+
+	op U : -> Action . 
+
+	op _act=_ : Action Action -> DALFormula . 
+
+	op ps : Action -> DALFormula .
+
+	op pw : Action -> DALFormula . 
+
+	op done : Action -> DALFormula .
+
+	op none : -> Path .
+
+	op -- : Nat -> Nat .
+	
+	op noE : -> Event . 
+	op noW : -> World .
+	op noF : -> DALFormula . 
+	op epsilon : -> Action .
+ 
+
+	
+	op _,_->_ : World Event World -> Transition [ctor] . 
+
+	op _>_ : Path Path -> Path [assoc id: none] .
+	
+	--- the following must be instanciated(?) in the VALUATION module (together with I(every predicate and action))
+	
+	op arcs : World -> [Set{Transition}] .
+	
+	op worlds : -> Set{World} .
+	
+	op events : -> Set{Event} .
+	
+	op P : World -> Set{Event} .
+	
+
+	
+	sort CTLModel .
+
+	op ctlModel : Bool Path -> CTLModel .
+
+	op not_ : CTLModel -> CTLModel .
+
+	op isTrue? : CTLModel -> Bool .
+	
+	op getPath : CTLModel -> Path .
+	
+	op getEvent : Transition -> Event . 
+
+	op oneExec : Transition -> World .
+	
+	op nth : Path Nat -> World .
+	
+	op nthE : Path Nat -> Event .
+
+	op nthT : Path Nat -> Path .
+		
+
+	op modelCheck : DALFormula Nat Nat Path -> CTLModel .
+
+	op notModel : CTLModel -> CTLModel . 
+
+	op formulaerror : -> [DALFormula] . 
+	
+
+
+	op valuation : Proposition -> Set{World} .
+
+	op trSearch : World -> [Transition] .
+
+	op dl-extension-module : -> Qid .
+
+	op error : -> [World] .
+	
+	op wError : -> [Set{World}] . 
+
+	op tError : -> [Set{Transition}] .
+	
+	op tsError : -> [Set{Transition}] . 
+	
+
+	op holdsIn : Proposition World -> Bool .
+	
+	op holdsInSet : Set{Transition} DALFormula Nat Nat Path -> CTLModel .
+
+	op findOneStep : Set{Transition} World DALFormula Nat Path -> CTLModel . 
+
+	op neigh : World -> Set{Transition} .
+	
+	op neigh : World Event -> Set{Transition} .
+	
+	op neigh-aux : Set{Transition} Event -> Set{Transition} .
+
+	op curr : Transition -> World .
+	
+	op permited : Action World -> Bool .
+
+	op weakPermited : Action World -> Bool .
+	
+	op I : DALFormula -> Set{World} .
+
+	op I : Action -> Set{Event} .
+	
+	
+
+	vars F F1 : DALFormula . 
+
+	vars BOUND SOL N : Nat .
+
+	vars DLF DPLF1 DPLF2 : DALFormula . var Q : Qid . 
+
+	var B : Bool . var PPDLM : CTLModel .
+
+	vars M M2 : World . var TS : Path . 
+	
+	var TRANS : Set{Transition} . var T : Transition . var PR : Proposition . 
+	
+	vars ACT ACT1 ACT2 : Action . var EV : Event . 
+
+	eq --(0) = 0 .
+
+	eq --(N) = sd(N, 1) .	
+
+	eq I( ~ F) = worlds \ I(F) .
+
+	eq I(F /\ F1) = worlds \ (I(~ F), I(~ F1)) .
+
+	eq I(ACT1 u ACT2) = I(ACT1), I(ACT2) .
+
+	eq I(U) = events .
+
+	eq I(ACT1 n ACT2) = intersection(I(ACT1), I(ACT2)) .
+
+	eq I(~ ACT1) = events \ I(ACT1) .
+
+	eq I(epsilon) = empty .
+		  		
+	
+	--- CTLModel operations
+
+	eq not ctlModel(B, TS) = ctlModel(not B, TS) .
+
+	eq isTrue?(ctlModel(B, TS)) = B .	
+	
+	eq getPath(ctlModel(B, TS)) = TS . 
+	
+	---
+	
+	eq getEvent(M , EV -> M2) = EV .
+	
+	eq oneExec( M, EV -> M2 ) = M2 .
+	
+	eq curr(M, EV -> M2) = M . 
+	
+	---
+	
+	eq nth(none, N) = noW .
+	eq nth((M, EV -> M2) > TS, 0) = M .
+	eq nth((M, EV -> M2) > TS, 1) = M2 .
+	eq nth(T > TS, N) = nth(TS, --(N)) . 
+	
+	eq nthE(none, N) = noE .
+	eq nthE((M, EV -> M2), 0) = EV .
+	eq nthE(T > TS, N) = nthE(TS, --(N)).
+
+	eq nthT(none, N) = none .
+	eq nthT(T > TS, 0) = none .
+	eq nthT(T > TS, N) = T > nthT(TS, --(N)) .
+
+
+	--- DAL model checking
+
+	eq modelCheck( true, N, BOUND , TS) = ctlModel(true , TS) .
+
+	eq modelCheck( F, N, 0 , TS) = ctlModel(true , TS) .
+
+	eq modelCheck( PR, N, BOUND , TS) = ctlModel(holdsIn(PR,nth(TS, N)), TS) .
+	
+	eq modelCheck( ACT1 act= ACT2, N, BOUND, TS) = ctlModel(((I(ACT1) subset I(ACT2)) and (I(ACT2) subset I(ACT1))), TS) .
+	
+	eq modelCheck( ps(ACT), N, BOUND , TS) = ctlModel(permited(ACT, nth(TS, N)), TS) .
+	
+	eq modelCheck( pw(ACT), N, BOUND , TS) = ctlModel(weakPermited(ACT, nth(TS, N)), TS) .
+	
+	eq modelCheck( done(ACT), N, BOUND , TS) = if N == 0 then ctlModel(false, TS) else ctlModel(nthE(TS, N) in I(ACT), TS) fi .
+
+	eq modelCheck( ~ F, N, BOUND, TS) = not modelCheck(F, N, BOUND, TS) .
+
+	eq modelCheck( F /\ F1, N, BOUND, TS) = if isTrue?(modelCheck( F, N, BOUND, TS)) 
+		then modelCheck( F1, N, BOUND, TS) else modelCheck( F, N, BOUND, TS) fi .
+		
+	eq modelCheck( [ ACT ] F, N, BOUND, TS) = if (nthE(TS, N) in I(ACT)) then holdsInSet(neigh(nth(TS, N), nthE(TS, N)), F, N, --(BOUND), nthT(TS, N)) 
+		else ctlModel(false, TS) fi .
+		
+	eq modelCheck( (AN(F)), N, BOUND, TS) = if nth(TS, N + 1) == noW then modelCheck(F, N, BOUND, TS) 
+		else holdsInSet(neigh(nth(TS, N), nthE(TS, N)), F, N, --(BOUND),  nthT(TS, N)) fi .
+	
+	eq modelCheck( (AG(F)), N, BOUND, TS) = if nth(TS, N + 1) == noW then modelCheck(F, N, BOUND, TS) 
+		else if isTrue?(modelCheck(F, N, BOUND, TS)) then holdsInSet(neigh(nth(TS, N), nthE(TS, N)), AG2(F), N, --(BOUND),  nthT(TS, N)) 
+			 else modelCheck(F, N, BOUND, TS) fi fi .
+		
+	eq modelCheck( (AG2(F)), N, BOUND, TS) = if isTrue?(modelCheck(F, N, BOUND, TS)) then holdsInSet(neigh(nth(TS, N)), AG2(F), N, --(BOUND),  nthT(TS, N)) 
+		else modelCheck(F, N, BOUND, TS) fi .
+		
+	eq modelCheck( (A(F U F1)), N, BOUND, TS) = if nth(TS, N + 1) == noW then modelCheck(F1, N, BOUND, TS) 
+		else if isTrue?(modelCheck(F1, N, BOUND, TS)) then ctlModel(true, TS) 
+			 else if isTrue?(modelCheck( F, N, BOUND, TS)) then holdsInSet(neigh(nth(TS, N), nthE(TS, N)), A(F U2 F1), N, --(BOUND), nthT(TS, N)) 
+				  else modelCheck(F, N, BOUND, TS) fi fi fi .
+	
+	eq modelCheck( (A(F U2 F1)), N, BOUND, TS) = if isTrue?(modelCheck(F1, N, BOUND, TS)) then ctlModel(true, TS) 
+		else if isTrue?(modelCheck( F, N, BOUND, TS)) then holdsInSet(neigh(nth(TS, N)), A(F U2 F1), N, --(BOUND), nthT(TS, N)) else modelCheck(F, N, BOUND, TS) fi fi .
+	
+	
+
+	
+	---reflexao
+	
+   	eq holdsIn(PR, M) = M in downTerm(getTerm(metaReduce(upModule('VALUATION, false), 'I[upTerm(PR)])), wError) .
+
+	
+	eq holdsInSet(empty, F, N, BOUND, TS) = ctlModel(true, none) . 
+	eq holdsInSet((TRANS, T), F, N, BOUND, TS) = if isTrue?(modelCheck(F, N + 1, BOUND, TS > T)) then holdsInSet(TRANS, F, N, BOUND, TS) 
+		else modelCheck(F, N + 1, BOUND, TS > T) fi .
+	
+	eq neigh(M) = if  downTerm(getTerm(metaReduce(upModule('VALUATION, false), 'arcs[upTerm(M)])), tError) == tError then empty 
+		else downTerm(getTerm(metaReduce(upModule('VALUATION, false), 'arcs[upTerm(M)])), tError) fi .
+
+	eq neigh(M, EV) = if  downTerm(getTerm(metaReduce(upModule('VALUATION, false), 'arcs[upTerm(M)])), tError) == tError then empty 
+		else neigh-aux(downTerm(getTerm(metaReduce(upModule('VALUATION, false), 'arcs[upTerm(M)])), tError), EV) fi .
+		
+	eq neigh-aux(empty, EV) = empty .
+	
+	eq neigh-aux((TRANS, T), EV) = if getEvent(T) == EV then (T, neigh-aux(TRANS, EV)) else neigh-aux(TRANS, EV) fi .
+
+	eq permited( ACT , M ) = I(ACT) subset P(M) .
+
+	eq weakPermited( ACT, M) = | ( intersection( P(M) , I(ACT) ) ) | > 0 .
+
+endm
+
+
+
+
+
+mod VALUATION is inc DL-MODEL-CHECKER . 
+
+	eq worlds = w 1, w 2, w 3, w 4, w 5, w 6 .
+	eq events = e 1 , e 2, e 3 . 
+
+	eq I(p 1) = w 1, w 2, w 4, w 5, w 6 . 
+	eq I(p 2) = w 5 .
+	eq I(p 3) = w 3, w 4, w 5 .
+	eq I(p 4) = w 6 .
+	
+	eq I( a 1 ) = e 1 , e 2 .
+	eq I( a 2 ) = e 1 .
+	eq I( a 3 ) = e 3 .
+	eq I( a 4 ) = e 2 .
+	eq I( a 5 ) = e 2 , e 3 .
+	
+	eq P( w 1 ) = e 2 . 
+	eq P( w 2 ) = e 1 , e 2 , e 3 .
+	eq P( w 3 ) = e 1 , e 2 , e 3 .
+	eq P( w 4 ) = e 1 , e 2 , e 3 .
+	eq P( w 5 ) = e 1, e 2 .
+
+
+	---a 2d = p1; heat = p2;time set = p3; done = p4
+
+	---a 1 oven = pi1; a 2 door = pi2 ; a 3 door = pi3
+	---set time = pi4; a 5 = pi5; a 6 = pi6;
+
+	eq arcs(w 1) = (w 1, e 1 -> w 2), (w 1, e 2 -> w 3), (w 1, e 3 -> w 1).
+	eq arcs(w 2) = (w 2, e 1 -> w 4), (w 2, e 2 -> w 1).
+	eq arcs(w 3) = (w 3, e 1 -> w 4), (w 3, e 2 -> w 1), (w 3, e 3 -> w 6) . 
+	eq arcs(w 4) = (w 4, e 1 -> w 5), (w 4, e 2 -> w 3), (w 4, e 3 -> w 2) .
+	eq arcs(w 5) = (w 5, e 1 -> w 6), (w 5, e 2 -> w 4), (w 5, e 3 -> w 3) . 
+	eq arcs(w 6) = empty .
+ 
+
+endm
+
+
+red modelCheck((  AG( ~ p 1) ), 0, 10, (w 1, e 1 -> w 2) > (w 2, e 1 -> w 4) > (w 4, e 2 -> w 3) > (w 3, e 3 -> w 6)).
