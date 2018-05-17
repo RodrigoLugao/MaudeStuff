@@ -87,9 +87,9 @@ mod DL-MODEL-CHECKER is
 
 	op _act=_ : Action Action -> DALFormula . 
 
-	op ps : Action -> DALFormula .
+	op ps : Action Nat -> DALFormula .
 
-	op pw : Action -> DALFormula . 
+	op pw : Action Nat -> DALFormula . 
 
 	op done : Action -> DALFormula .
 
@@ -116,19 +116,19 @@ mod DL-MODEL-CHECKER is
 	
 	op events : -> Set{Event} .
 	
-	op P : World -> Set{Event} .
+	op P : World Nat -> Set{Event} .
 	
 
 	
-	sort CTLModel .
+	sort DALModel .
 
-	op ctlModel : Bool Path -> CTLModel .
+	op dalModel : Bool Path -> DALModel .
 
-	op not_ : CTLModel -> CTLModel .
+	op not_ : DALModel -> DALModel .
 
-	op isTrue? : CTLModel -> Bool .
+	op isTrue? : DALModel -> Bool .
 	
-	op getPath : CTLModel -> Path .
+	op getPath : DALModel -> Path .
 	
 	op getEvent : Transition -> Event . 
 
@@ -141,9 +141,9 @@ mod DL-MODEL-CHECKER is
 	op nthT : Path Nat -> Path .
 		
 
-	op modelCheck : DALFormula Nat Nat Path -> CTLModel .
+	op modelCheck : DALFormula Nat Nat Path -> DALModel .
 
-	op notModel : CTLModel -> CTLModel . 
+	op notModel : DALModel -> DALModel . 
 
 	op formulaerror : -> [DALFormula] . 
 	
@@ -166,9 +166,9 @@ mod DL-MODEL-CHECKER is
 
 	op holdsIn : Proposition World -> Bool .
 	
-	op holdsInSet : Set{Transition} DALFormula Nat Nat Path -> CTLModel .
+	op holdsInSet : Set{Transition} DALFormula Nat Nat Path -> DALModel .
 
-	op findOneStep : Set{Transition} World DALFormula Nat Path -> CTLModel . 
+	op findOneStep : Set{Transition} World DALFormula Nat Path -> DALModel . 
 
 	op neigh : World -> Set{Transition} .
 	
@@ -178,9 +178,9 @@ mod DL-MODEL-CHECKER is
 
 	op curr : Transition -> World .
 	
-	op permited : Action World -> Bool .
+	op permited : Action World Nat -> Bool .
 
-	op weakPermited : Action World -> Bool .
+	op weakPermited : Action World Nat -> Bool .
 	
 	op I : DALFormula -> Set{World} .
 
@@ -190,11 +190,11 @@ mod DL-MODEL-CHECKER is
 
 	vars F F1 : DALFormula . 
 
-	vars BOUND SOL N : Nat .
+	vars BOUND SOL N N2 : Nat .
 
 	vars DLF DPLF1 DPLF2 : DALFormula . var Q : Qid . 
 
-	var B : Bool . var PPDLM : CTLModel .
+	var B : Bool . var PPDLM : DALModel .
 
 	vars M M2 : World . var TS : Path . 
 	
@@ -221,13 +221,13 @@ mod DL-MODEL-CHECKER is
 	eq I(epsilon) = empty .
 		  		
 	
-	--- CTLModel operations
+	--- DALModel operations
 
-	eq not ctlModel(B, TS) = ctlModel(not B, TS) .
+	eq not dalModel(B, TS) = dalModel(not B, TS) .
 
-	eq isTrue?(ctlModel(B, TS)) = B .	
+	eq isTrue?(dalModel(B, TS)) = B .	
 	
-	eq getPath(ctlModel(B, TS)) = TS . 
+	eq getPath(dalModel(B, TS)) = TS . 
 	
 	---
 	
@@ -255,19 +255,19 @@ mod DL-MODEL-CHECKER is
 
 	--- DAL model checking
 
-	eq modelCheck( true, N, BOUND , TS) = ctlModel(true , TS) .
+	eq modelCheck( true, N, BOUND , TS) = dalModel(true , TS) .
 
-	eq modelCheck( F, N, 0 , TS) = ctlModel(true , TS) .
+	eq modelCheck( F, N, 0 , TS) = dalModel(true , TS) .
 
-	eq modelCheck( PR, N, BOUND , TS) = ctlModel(holdsIn(PR,nth(TS, N)), TS) .
+	eq modelCheck( PR, N, BOUND , TS) = dalModel(holdsIn(PR,nth(TS, N)), TS) .
 	
-	eq modelCheck( ACT1 act= ACT2, N, BOUND, TS) = ctlModel(((I(ACT1) subset I(ACT2)) and (I(ACT2) subset I(ACT1))), TS) .
+	eq modelCheck( ACT1 act= ACT2, N, BOUND, TS) = dalModel(((I(ACT1) subset I(ACT2)) and (I(ACT2) subset I(ACT1))), TS) .
 	
-	eq modelCheck( ps(ACT), N, BOUND , TS) = ctlModel(permited(ACT, nth(TS, N)), TS) .
+	eq modelCheck( ps(ACT, N2), N, BOUND , TS) = dalModel(permited(ACT, nth(TS, N), N2), TS) .
 	
-	eq modelCheck( pw(ACT), N, BOUND , TS) = ctlModel(weakPermited(ACT, nth(TS, N)), TS) .
+	eq modelCheck( pw(ACT, N2), N, BOUND , TS) = dalModel(weakPermited(ACT, nth(TS, N), N2), TS) .
 	
-	eq modelCheck( done(ACT), N, BOUND , TS) = if N == 0 then ctlModel(false, TS) else ctlModel(nthE(TS, N) in I(ACT), TS) fi .
+	eq modelCheck( done(ACT), N, BOUND , TS) = if N == 0 then dalModel(false, TS) else dalModel(nthE(TS, N) in I(ACT), TS) fi .
 
 	eq modelCheck( ~ F, N, BOUND, TS) = not modelCheck(F, N, BOUND, TS) .
 
@@ -275,7 +275,7 @@ mod DL-MODEL-CHECKER is
 		then modelCheck( F1, N, BOUND, TS) else modelCheck( F, N, BOUND, TS) fi .
 		
 	eq modelCheck( [ ACT ] F, N, BOUND, TS) = if (nthE(TS, N) in I(ACT)) then holdsInSet(neigh(nth(TS, N), nthE(TS, N)), F, N, --(BOUND), nthT(TS, N)) 
-		else ctlModel(false, TS) fi .
+		else dalModel(false, TS) fi .
 		
 	eq modelCheck( (AN(F)), N, BOUND, TS) = if nth(TS, N + 1) == noW then modelCheck(F, N, BOUND, TS) 
 		else holdsInSet(neigh(nth(TS, N), nthE(TS, N)), F, N, --(BOUND),  nthT(TS, N)) fi .
@@ -288,11 +288,11 @@ mod DL-MODEL-CHECKER is
 		else modelCheck(F, N, BOUND, TS) fi .
 		
 	eq modelCheck( (A(F U F1)), N, BOUND, TS) = if nth(TS, N + 1) == noW then modelCheck(F1, N, BOUND, TS) 
-		else if isTrue?(modelCheck(F1, N, BOUND, TS)) then ctlModel(true, TS) 
+		else if isTrue?(modelCheck(F1, N, BOUND, TS)) then dalModel(true, TS) 
 			 else if isTrue?(modelCheck( F, N, BOUND, TS)) then holdsInSet(neigh(nth(TS, N), nthE(TS, N)), A(F U2 F1), N, --(BOUND), nthT(TS, N)) 
 				  else modelCheck(F, N, BOUND, TS) fi fi fi .
 	
-	eq modelCheck( (A(F U2 F1)), N, BOUND, TS) = if isTrue?(modelCheck(F1, N, BOUND, TS)) then ctlModel(true, TS) 
+	eq modelCheck( (A(F U2 F1)), N, BOUND, TS) = if isTrue?(modelCheck(F1, N, BOUND, TS)) then dalModel(true, TS) 
 		else if isTrue?(modelCheck( F, N, BOUND, TS)) then holdsInSet(neigh(nth(TS, N)), A(F U2 F1), N, --(BOUND), nthT(TS, N)) else modelCheck(F, N, BOUND, TS) fi fi .
 	
 	
@@ -303,7 +303,7 @@ mod DL-MODEL-CHECKER is
    	eq holdsIn(PR, M) = M in downTerm(getTerm(metaReduce(upModule('VALUATION, false), 'I[upTerm(PR)])), wError) .
 
 	
-	eq holdsInSet(empty, F, N, BOUND, TS) = ctlModel(true, none) . 
+	eq holdsInSet(empty, F, N, BOUND, TS) = dalModel(true, none) . 
 	eq holdsInSet((TRANS, T), F, N, BOUND, TS) = if isTrue?(modelCheck(F, N + 1, BOUND, TS > T)) then holdsInSet(TRANS, F, N, BOUND, TS) 
 		else modelCheck(F, N + 1, BOUND, TS > T) fi .
 	
@@ -317,9 +317,9 @@ mod DL-MODEL-CHECKER is
 	
 	eq neigh-aux((TRANS, T), EV) = if getEvent(T) == EV then (T, neigh-aux(TRANS, EV)) else neigh-aux(TRANS, EV) fi .
 
-	eq permited( ACT , M ) = I(ACT) subset P(M) .
+	eq permited( ACT , M, N ) = I(ACT) subset P(M, N) .
 
-	eq weakPermited( ACT, M) = | ( intersection( P(M) , I(ACT) ) ) | > 0 .
+	eq weakPermited( ACT, M, N) = | ( intersection( P(M, N) , I(ACT) ) ) | > 0 .
 
 endm
 
@@ -343,11 +343,11 @@ mod VALUATION is inc DL-MODEL-CHECKER .
 	eq I( a 4 ) = e 2 .
 	eq I( a 5 ) = e 2 , e 3 .
 	
-	eq P( w 1 ) = e 2 . 
-	eq P( w 2 ) = e 1 , e 2 , e 3 .
-	eq P( w 3 ) = e 1 , e 2 , e 3 .
-	eq P( w 4 ) = e 1 , e 2 , e 3 .
-	eq P( w 5 ) = e 1, e 2 .
+	eq P( w 1 , 1 ) = e 2 . 
+	eq P( w 2 , 1 ) = e 1 , e 2 , e 3 .
+	eq P( w 3 , 1 ) = e 1 , e 2 , e 3 .
+	eq P( w 4 , 1 ) = e 1 , e 2 , e 3 .
+	eq P( w 5 , 1 ) = e 1, e 2 .
 
 
 	---a 2d = p1; heat = p2;time set = p3; done = p4
