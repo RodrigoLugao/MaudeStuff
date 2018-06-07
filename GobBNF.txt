@@ -1,0 +1,17 @@
+LSTSTT ::= LSTSTT LSTSTT | STT
+STT    ::= ATT ( ";" | "\n" ) {"\n"} | CTL ( ";" | "\n" ) {"\n"} | "break" (";" | "\n")
+ATT    ::= ID "=" VLT
+VLT    ::= AEX | BEX
+AEX    ::= AEX "+" AEX | AEX "-" AEX | AEX "*" AEX | AEX "/" AEX | ID | NVL | "(" AEX ")"
+BEX    ::= (BEX | AEX) "==" (BEX | AEX) | (BEX | AEX) "!=" (BEX | AEX) | (BEX | AEX) ">" (BEX | AEX) | (BEX | AEX) "<" (BEX | AEX) |
+			(BEX | AEX) ">=" (BEX | AEX) | (BEX | AEX) "<=" (BEX | AEX) | "!"(BEX | AEX) | (BEX | AEX) "||" (BEX | AEX) | (BEX | AEX) "&&" (BEX | AEX) |
+			"(" BEX ")" | ID | BVL
+BVL    ::= "true" | "false"
+NVL    ::= NEG | POS | "0"
+NEG    ::= "-" NZV + {NUM}
+POS    ::= [+] NZV + {NUM}
+NZV    ::= ("1" - "9")
+NUM    ::= NZV | "0"
+CTL    ::= "if" BEX (STT | "\n" LSTSTT) "\n" ["else" (STT | "\n" LSTSTT) "\n"] | 
+			"while" BEX (STT | "\n" LSTSTT) "\n"
+ID     ::= ("a" - "Z") + {("a" - "Z") | ("1" - "9")}

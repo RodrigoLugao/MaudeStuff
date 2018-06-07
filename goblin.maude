@@ -1,0 +1,88 @@
+fmod GOBLIN-GRAMMAR is
+	ex NAT .
+	pr RAT .
+	inc QID .
+	
+	sorts SttLst Trmnl Stt Id Axp Bxp LstId .
+	subsort Stt < SttLst .
+	subsort Id < Axp < Bxp .
+	subsort Rat < Axp .
+	subsort Qid < Id < LstId .
+	
+	op noStt : -> SttLst [ctor] .
+	op __ : SttLst SttLst -> SttLst [assoc id: noStt prec 6] .
+	
+	op _; Stt -> Stt .
+	
+	op break : -> Stt [ctor] .
+	
+	op _=_ : Id Bxp -> Stt [prec 3 ctor ] .
+	
+	op if__ : Bxp SttLst -> Stt [ctor prec 5] .
+	op if__else_ : Bxp SttLst SttLst -> Stt [ctor prec 5] .
+	op while__ : Bxp SttLst -> Stt [ctor prec 5] .	
+	
+	op _+,_ : Axp Axp -> Axp [prec 2 assoc comm] .
+	op _-,_ : Axp Axp -> Axp [prec 2 assoc] .
+	op _*,_ : Axp Axp -> Axp [prec 1 assoc comm] .
+	op _/,_ : Axp Axp -> Axp [prec 1 assoc] .
+	
+	op true : -> Bxp [ctor] .
+	op false : -> Bxp [ctor] .
+	
+	op _==,_ : Bxp Bxp -> Bxp [prec 3] .
+	op _!=,_ : Bxp Bxp -> Bxp [prec 3] .
+	op _>,_ : Bxp Bxp -> Bxp [prec 3] .
+	op _<,_ : Bxp Bxp -> Bxp [prec 3] .
+	op _>=,_ : Bxp Bxp -> Bxp [prec 3] .
+	op _<=,_ : Bxp Bxp -> Bxp [prec 3] .
+	op !,_ : Bxp -> Bxp [prec 2] .
+	op _||,_ : Bxp Bxp -> Bxp [prec 4] .
+	op _&&,_ : Bxp Bxp -> Bxp [prec 4] .
+	
+	op noId : -> LstId [ctor] .
+	op _,_ : LstId LstId -> LstId [assoc comm id: noId] .
+	op listIds : SttLst -> LstId .
+	op listIds : Bxp -> LstId  .
+	
+	vars L L1 L2 L3 : SttLst .
+	vars I : Id . vars B B1 B2 : Bxp .
+	vars A1 A2 : Axp .
+	
+	eq (I, I) = I .
+
+	eq listIds(noStt) = noId .
+	eq listIds(break ; L) = listIds(L) .
+	eq listIds((I = B) ; L) = I , listIds(B) , listIds(L) .
+	eq listIds(if B L1 ; L2) = listIds(B) , listIds(L1) , listIds(L2) .
+	eq listIds(if B L1:SttLst else L2:SttLst ; L3:SttLst) = listIds(B) , listIds(L1) , listIds(L2) , listIds(L3) .
+	eq listIds(while B L1:SttLst ; L2:SttLst) = listIds(B) , listIds(L1) , listIds(L2) .
+	
+
+	eq listIds(I) = I .
+	eq listIds(A1 +, A2) = listIds(A1) , listIds(A2) .
+	eq listIds(A1 -, A2) = listIds(A1) , listIds(A2) .
+	eq listIds(A1 *, A2) = listIds(A1) , listIds(A2) .
+	eq listIds(A1 /, A2) = listIds(A1) , listIds(A2) .
+	
+	eq listIds(B1 ==, B2) = listIds(B1) , listIds(B2) .
+	eq listIds(B1 !=, B2) = listIds(B1) , listIds(B2) .
+	eq listIds(B1 >, B2) = listIds(B1) , listIds(B2) .
+	eq listIds(B1 <, B2) = listIds(B1) , listIds(B2) .
+	eq listIds(B1 >=, B2) = listIds(B1) , listIds(B2) .
+	eq listIds(B1 <=, B2) = listIds(B1) , listIds(B2) .
+	eq listIds(!, B1) = listIds(B1) .
+	eq listIds(B1 ||, B2) = listIds(B1) , listIds(B2) .
+	eq listIds(B1 &&, B2) = listIds(B1) , listIds(B2) .
+	eq listIds(B) = noId [owise] .
+
+endfm
+
+mod COMP-GOB-PI is
+ inc BPLC .
+ inc GOBLIN-GRAMMAR .
+ inc META-LEVEL .
+
+		
+
+endm
