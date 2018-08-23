@@ -141,7 +141,7 @@ mod DL-MODEL-CHECKER is
 
 	op tError : -> [Transition] .
 	
-	
+	op --_ : Nat -> Nat .
 
 	op dlFormula : World [DLFormula] Nat LabelList Nat -> DLModel .
 
@@ -166,6 +166,8 @@ mod DL-MODEL-CHECKER is
 	var TRANS : Set{Transition} . var T : Transition . var L : Label . var PR : Predicate . 
 
 		  		
+	eq --(N) = if N == 0 then 0 else sd(N, 1) fi .
+	
 	
 	--- DLModel operations
 
@@ -202,7 +204,7 @@ mod DL-MODEL-CHECKER is
 	
 
 	eq findOneStep( empty, M , F , N , BPL) = dlModel(false , BPL) .
-	eq findOneStep( (TRANS, T), M , F , N , BPL ) = if isTrue?( modelCheck( oneExec( T ) , F , sd(N , 1) , BPL > getLabel(T) ) ) then modelCheck( oneExec( T ) , F , sd(N , 1) , BPL > getLabel(T) ) else findOneStep(TRANS , M , F , N , BPL ) fi .
+	eq findOneStep( (TRANS, T), M , F , N , BPL ) = if isTrue?( modelCheck( oneExec( T ) , F , --(N) , BPL > getLabel(T) ) ) then modelCheck( oneExec( T ) , F , --(N) , BPL > getLabel(T) ) else findOneStep(TRANS , M , F , N , BPL ) fi .
 	
 	---reflexao
 	
@@ -217,7 +219,7 @@ mod DL-MODEL-CHECKER is
 	eq dlFormula(M, F, N, BPL, SOL) = dlFormula-aux(M, downTerm(getTerm(metaSearch(upModule('DL-MODULE, false), upTerm(F), 'F:DLFormula, nil, '+, 1, SOL)), formulaerror), F, N, BPL, SOL) .
 	eq dlFormula-aux(M, formulaerror, F1, N, BPL, SOL) = dlModel(false, BPL) .
 	eq dlFormula-aux(M, F, F1, N, BPL, SOL) = if isTrue?(modelCheck(M, F, N, BPL)) then modelCheck(M, F, N, BPL) else
-		dlFormula(M, F1, sd(N, 1), BPL, SOL + 1) fi .
+		dlFormula(M, F1, --(N), BPL, SOL + 1) fi .
 	
 
 	
